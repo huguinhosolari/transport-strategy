@@ -36,4 +36,50 @@ class TravelController extends Controller
 
         return response()->json($result);
     }
+
+    public function viaje(Request $request)
+    {
+
+        $data = $request->validate([
+            'mode' => 'required|in:taxi,bike,bus,metro,uber',
+            'distance_km' => 'required|numeric|min:0.5',
+        ]);
+
+
+        //entra por post
+        if($request->isMethod('post')){
+
+            // instaciaremos la estrategia segun el modo (tipo de transporte) seleccionado
+            $strategy = match($data['mode']) {
+            'taxi' => new TaxiStrategy(),
+            'bike' => new BikeStrategy(),
+            'bus' => new BusStrategy(),
+            'metro' => new MetroStrategy(),
+            'uber' => new UberStrategy(),
+        };
+
+        $service = new TravelService($strategy);
+        
+        $result = $service->plan($data['distance_km']);
+        return view('travel-result', compact('result'));
+        }
+
+        // si entra por get, mostrar form
+        return view('transport');
+
+
+    }
+
+    public function getTravelOptions()
+    {
+        $options = [
+            'taxi' => 'Taxi',
+            'bike' => 'Bicicleta',
+            'bus' => 'Bus',
+            'metro' => 'Metro',
+            'uber' => 'Uber',
+        ];
+
+        return response()->json($options);
+    }
 }
